@@ -348,10 +348,12 @@ void poll_buttons(uint32_t now_ms) {
       logical_knobs(adc);
       if (raw) {
         controls.press(i, adc);
-        uint32_t flags = save_and_disable_interrupts();
-        trigger(i);
-        if (manual_mode && i < 5) voices[i].decrement = 0;
-        restore_interrupts(flags);
+        if (manual_mode) {
+          uint32_t flags = save_and_disable_interrupts();
+          trigger(i);
+          if (i < 5) voices[i].decrement = 0;
+          restore_interrupts(flags);
+        }
       } else {
         if (!(suppress_release_mask & bit)) controls.release(i, adc);
         publish_controls();

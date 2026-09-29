@@ -16,7 +16,7 @@ A lit sound button means its loop is on. The synth starts silent. Patterns and s
 
 ## Buttons
 
-In normal play, buttons 1–7 play their sound immediately and switch its loop on or off when released.
+With the tempo up, buttons 1–7 switch their loops on or off when released. Pressing a button adds no extra hit: enabled sounds play on their programmed steps.
 
 | Button | Sound |
 | --- | --- |

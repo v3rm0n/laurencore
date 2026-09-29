@@ -16,6 +16,9 @@ constexpr bool kSwapFunctionKnobs = false;
 constexpr uint32_t kButtonDebounceMs = 30;
 constexpr uint32_t kMelodyHoldMs = 450;
 constexpr uint32_t kSequencerChordMs = 1000;
+constexpr uint32_t kSelectionDisplayMs = 1000;
+constexpr uint16_t kSelectionMoveThreshold = 80;
+constexpr uint16_t kSelectionHysteresis = 32;
 constexpr uint32_t kSynthAttackMs = 8;
 constexpr int32_t kSynthFilterDivisor = 4;
 // C major pentatonic from C3 to E7. Every pitched edit stays in this scale.
@@ -51,6 +54,9 @@ volatile uint8_t bounce_amount = 0;
 volatile bool manual_mode = false;
 bool sequencer_mode = false;
 uint8_t sequencer_track = 0;
+uint16_t selection_knob_anchor = 0;
+uint32_t selection_changed_ms = 0;
+bool show_sound_selection = false;
 bool chord_active = false;
 bool chord_consumed = false;
 uint32_t chord_started_ms = 0;
@@ -301,6 +307,7 @@ void poll_buttons(uint32_t now_ms) {
       const uint8_t bit = 1u << i;
       if (sequencer_mode) {
         if (raw) {
+          show_sound_selection = false;
           sequencer_press_track[i] = sequencer_track;
           uint32_t flags = save_and_disable_interrupts();
           trigger(sequencer_track);
@@ -370,6 +377,12 @@ void poll_buttons(uint32_t now_ms) {
       }
     if (!sequencer_mode) publish_controls();
     sequencer_mode = !sequencer_mode;
+    if (sequencer_mode) {
+      sequencer_track = static_cast<uint32_t>(adc[1]) * music::kLoopTracks / 4096;
+      selection_knob_anchor = adc[1];
+      selection_changed_ms = now_ms;
+      show_sound_selection = true;
+    }
     uint32_t flags = save_and_disable_interrupts();
     melody_held = false;
     fill_steps_left = 0;
@@ -384,12 +397,29 @@ void poll_buttons(uint32_t now_ms) {
   suppress_release_mask &= still_held;
 }
 
-void poll_knobs() {
+void poll_knobs(uint32_t now_ms) {
   for (uint8_t i = 0; i < 3; ++i) raw_knobs[i] = read_knob(i);
   uint16_t adc[3];
   logical_knobs(adc);
-  if (sequencer_mode)
-    sequencer_track = static_cast<uint32_t>(adc[1]) * music::kLoopTracks / 4096;
+  if (sequencer_mode) {
+    const uint16_t position = adc[1];
+    const uint16_t lower = sequencer_track * 4096 / music::kLoopTracks;
+    const uint16_t upper = (sequencer_track + 1) * 4096 / music::kLoopTracks;
+    uint8_t next_track = sequencer_track;
+    // Keep a sound selected near a boundary despite small ADC fluctuations.
+    if (position + kSelectionHysteresis < lower ||
+        position >= upper + kSelectionHysteresis)
+      next_track = static_cast<uint32_t>(position) * music::kLoopTracks / 4096;
+    const uint16_t movement = position > selection_knob_anchor
+                                  ? position - selection_knob_anchor
+                                  : selection_knob_anchor - position;
+    if (next_track != sequencer_track || movement >= kSelectionMoveThreshold) {
+      sequencer_track = next_track;
+      selection_knob_anchor = position;
+      selection_changed_ms = now_ms;
+      show_sound_selection = true;
+    }
+  }
   publish_controls(controls.turn(adc, sequencer_mode));
 }
 
@@ -405,6 +435,14 @@ void update_leds(uint32_t now_ms) {
   }
   uint8_t active = enabled;
   if (sequencer_mode) {
+    if (show_sound_selection &&
+        now_ms - selection_changed_ms >= kSelectionDisplayMs)
+      show_sound_selection = false;
+    if (show_sound_selection) {
+      for (uint8_t i = 0; i < music::kSteps; ++i)
+        gpio_put(12 + i, i == sequencer_track);
+      return;
+    }
     const uint8_t pattern = track_pattern[sequencer_track];
     const uint8_t playing_step = (step + music::kSteps - 1) % music::kSteps;
     for (uint8_t i = 0; i < music::kSteps; ++i) {
@@ -481,7 +519,7 @@ int main() {
   while (true) {
     uint32_t now_ms = to_ms_since_boot(get_absolute_time());
     poll_buttons(now_ms);
-    poll_knobs();
+    poll_knobs(now_ms);
     update_leds(now_ms);
     sleep_ms(10);
   }

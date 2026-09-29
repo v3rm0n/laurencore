@@ -60,7 +60,7 @@ Turn the first knob back up to resume the loops you were playing.
 Use the step editor to place hits exactly where you want them. Each sound has its own eight-step pattern, repeating every two beats.
 
 1. Keep the tempo knob above its minimum. Hold **buttons 6 and 7 together for one second**, then release them. A high chime confirms that the editor is open.
-2. Turn the **second knob** to choose a sound. From low to high, the choices follow buttons 1–7: C, D, E, G, A, kick, snare.
+2. Turn the **second knob** to choose a sound. From low to high, the choices follow buttons 1–7: C, D, E, G, A, kick, snare. While selecting, only that sound's button lights up. The step display returns about one second after you stop turning, or as soon as you press a step. Playback continues throughout.
 3. Buttons **1–8 now represent steps**. Tap a button to turn that step on or off. Each press also previews the chosen sound. Lit steps belong to the pattern; a moving blink shows playback.
 4. Choose another sound with the second knob to edit its pattern. Adding a hit starts that sound's loop.
 5. Hold **6 and 7 together for one second** again to return to normal play. A lower chime confirms the change. Your edited patterns keep playing.

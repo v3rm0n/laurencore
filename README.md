@@ -1,65 +1,78 @@
-# Littlecore
+# Laurencore
 
-A simple, self-contained firmware for the Erica Synths Pikocore XL (RP2040). No samples, storage, or computer are needed while playing. It starts silent. Seven lit keys combine repeating sounds; the eighth plays a generative melody or Magic Fill.
+Simple synth firmware for the **Pikocore XL (RP2040)**, designed for a young child to explore sounds and rhythms. Combine five pentatonic notes and two drums into loops, play them by hand, or make a pattern one step at a time.
 
-## Play
+[Download firmware](https://github.com/v3rm0n/laurencore/raw/refs/heads/main/firmware/littlecore.uf2) · [Install](#install) · [Build from source](docs/development.md)
 
-- Keys 1–5: C, D, E, G, A pentatonic notes. Keys 6–7: kick and snare. Tap a key to hear its sound immediately and start or stop its repeating part when you release it. A lit key has an active part. Its LED briefly blinks on each programmed hit.
-- Key 8: **Hold** to play a continuing, changing melody from the notes on keys 1–5. It starts immediately, plays a new note about every two steps, and stops choosing notes when released. Pitch and length edits to keys 1–5 also shape the melody. A **quick tap** starts Magic Fill when the tempo is running: a short pentatonic and drum flourish over the loops. Four repeatable fills cycle in order; no loops are erased. Its LED flashes while the melody or fill plays. It works even when all loops are off.
-- First control knob (ADC0): speed, 65–150 BPM. At the very bottom it enters **free-play**: the loop parts pause, keys 1–5 become playable notes that sustain while held, 6–7 trigger kick and snare, and holding key 8 still plays the melody. A quick tap of key 8 plays one note in free-play. Turn the knob back up to resume the loops. Hold a sound key while turning it to move that sound lower or higher. Notes stay in the C major pentatonic scale; the kick changes pitch and the snare becomes darker or brighter.
-- Second control knob (ADC1): **Bounce**. Turn clockwise for increasing swing; higher settings also add occasional, repeatable drum pickups. Hold a sound key while turning it to edit just that sound's Euclidean rhythm (1–7 evenly spaced hits in eight steps). Every part has its own offset, so combinations vary.
-- Third control knob (ADC2): **Space**. Turn clockwise from dry sound through tempo-synced echo to echo plus a short room reverb. Hold a key while turning it to change only that sound's length.
-- The fourth, physical volume knob controls output level as wired on the XL. Start it low, especially with headphones or an amplifier.
+## Start playing
 
-## Eight-step sequencer
+1. Set the volume low and turn the first control knob to the middle.
+2. Tap **button 6** to start a kick drum loop.
+3. Tap **buttons 1 and 4** to add notes. Each sound has its own repeating rhythm.
+4. Turn the second control knob to make the rhythm swing. Turn the third to add echo and reverb.
+5. Tap a sound button again to stop its loop.
 
-Hold keys **6 and 7 together for one second** to enter or leave the step editor. In the editor, the eight buttons are the eight steps of one sound. Turn ADC1 to choose a sound from keys 1–7, left to right. Lit steps play; press and release a step to switch it on or off. Pressing it also previews the selected sound. The moving LED marks the current step. Editing an unlit sound automatically starts its loop when you add a step.
+A lit sound button means its loop is on. The synth starts silent. Patterns and sound edits reset when you switch the power off.
 
-ADC0 still sets the tempo and ADC2 still sets Space. The bottom stop of ADC0 still pauses loops for free-play, so turn it up to hear the sequence. Bounce holds its last setting while ADC1 selects sounds in the editor. The 6+7 mode gesture does not toggle their loops or steps. When you leave the editor, all edited steps keep playing. Hold a sound key and turn ADC1 in normal mode to generate a fresh Euclidean pattern for just that sound.
+## Buttons
 
-In normal mode, hold several keys from 1–7 while turning any control knob to edit those sounds together. Held keys flash. Turning a knob while keys are held does not change that knob's shared function. A tap auditions immediately and toggles the loop on release; a hold-and-turn leaves the loop state as it was. In free-play, tapping does not change stored loops. Tone and length changes audition the edited sounds as you turn.
+In normal play, buttons 1–7 play their sound immediately and switch its loop on or off when released.
 
-All loops use eight sixteenth-note steps, so each pattern repeats every two beats. The melody's timing follows the tempo knob, including in free-play. The Magic Fill lasts eight steps. The echo repeats every eighth note and follows the tempo. There is no save function; switching power off clears the loops.
+| Button | Sound |
+| --- | --- |
+| 1 | C4 (middle C) |
+| 2 | D4 |
+| 3 | E4 |
+| 4 | G4 |
+| 5 | A4 |
+| 6 | Kick drum |
+| 7 | Snare drum |
+| 8 | Hold for a melody; tap for a fill |
 
-The five notes and the generated melody use a gentle low-pass filter and an eased attack to soften sharp note starts. The fill's chime has a faster attack; kick and snare keep their crisp attack.
+**Hold button 8** for a changing melody drawn from the current notes on buttons 1–5. It follows the tempo and uses those sounds' pitch and length settings. Releasing it after a hold stops new notes and lets the last one fade.
 
-## How the synth works
+**Quickly tap button 8** for a short “Magic Fill”: a flourish of notes and drums. It works even with all loops off, as long as the tempo knob is above its minimum.
 
-1. **Read the controls.** The main loop debounces the eight buttons and reads ADC0–2. A tap on keys 1–7 auditions the sound and toggles its loop when released. Holding a sound key while turning a knob edits that sound's pitch, rhythm, or length; turning a knob with no sound key held changes tempo, Bounce, or Space. The physical volume knob acts on the output circuit.
-2. **Keep an eight-step pattern for each sound.** Keys 1–7 each have an on/off pattern and an enabled state. A rhythm edit with ADC1 generates evenly spaced Euclidean hits for the held sound. In the step editor, button presses change individual steps in that same pattern. The edited pattern keeps playing after leaving the editor; another Euclidean rhythm edit replaces it. Patterns and settings live in RAM and reset on power-off.
-3. **Schedule the sounds.** A timer advances through eight sixteenth-note steps at the selected tempo. At each step, enabled sounds play where their pattern has a hit. Bounce shifts alternate step timing and can add occasional drum pickups to sounds still using generated rhythms. Free-play pauses the loops but keeps the patterns. Holding key 8 chooses successive notes from the current pitches and lengths of keys 1–5; a quick tap starts a one-cycle fill when the loops are running.
-4. **Make and mix audio.** The pitched keys use C-major-pentatonic oscillator notes; kick and snare use their own synthesized voices. Each hit has an envelope, and pitched voices have a softened attack and low-pass filter. The audio interrupt mixes the voices, applies the tempo-following echo and room effect set by Space, and sends the result to the RP2040 PWM audio output.
+## Knobs
 
-For example, tap key 1 to start its C-note loop, hold key 1 and turn ADC1 to choose an evenly spaced rhythm, then enter the step editor with keys 6+7 to add or remove individual hits. Leave the editor with the same gesture; the changed pattern continues playing.
+Turn a knob normally to change the whole performance. **Hold a sound button (1–7) while turning** to edit that sound instead.
 
-## Build
+| Control | Turn normally | Hold a sound button and turn |
+| --- | --- | --- |
+| First knob (ADC0) | Tempo, from 65 to 150 BPM. Fully down enters free play. | Pitch or tone |
+| Second knob (ADC1) | **Bounce:** swing, plus occasional extra drum hits at high settings | Rhythm: fewer or more hits |
+| Third knob (ADC2) | **Space:** dry sound → echo → echo and reverb | Length: short taps → longer sounds |
 
-Install the [Raspberry Pi Pico SDK](https://github.com/raspberrypi/pico-sdk) and an ARM embedded C++ toolchain, then:
+The fourth knob controls volume.
 
-```sh
-export PICO_SDK_PATH=/path/to/pico-sdk
-cmake -S . -B build
-cmake --build build -j
-```
+Pitch changes keep the five notes in the C major pentatonic scale. For the drums, this control changes kick pitch or snare brightness. The rhythm control spreads 1–7 hits evenly across eight steps; this is a *Euclidean rhythm*.
 
-The verified build artifact is [`firmware/littlecore.uf2`](firmware/littlecore.uf2). Hold BOOTSEL while connecting the RP board by USB and copy that file to its mass-storage drive. A local build also creates `build/littlecore.uf2`. The build is designed for the RP2040 board on the Pikocore XL. Host-only tests run with:
+You can hold several sound buttons to edit them together. After a hold-and-turn edit, releasing the buttons keeps their loops on or off as they were.
 
-```sh
-c++ -std=c++17 -Isrc tests/music_test.cpp src/music.cpp -o /tmp/littlecore-music-test && /tmp/littlecore-music-test
-c++ -std=c++17 -Isrc tests/performance_controls_test.cpp src/performance_controls.cpp src/music.cpp -o /tmp/littlecore-controls-test && /tmp/littlecore-controls-test
-c++ -std=c++17 -Isrc tests/space_effect_test.cpp src/space_effect.cpp -o /tmp/littlecore-space-test && /tmp/littlecore-space-test
-```
+## Play by hand
 
-## Hardware map
+With no sound buttons held, turn the **first knob all the way down**. The loops pause, and buttons 1–5 become notes that sustain while held. Buttons 6 and 7 play drums. Holding button 8 still generates a melody; a quick tap plays a note without starting a fill.
 
-The map follows [the original Pikocore firmware](https://github.com/schollz/pikocore), whose functionality the [XL assembly manual](https://www.ericasynths.lv/media/Pikocore_manual_Kb94E4q.pdf) says the XL shares: switches on GPIO 4–11 (active low), their LEDs on GPIO 12–19 (active high), audio PWM on GPIO 20, controls on ADC0–2 / GPIO 26–28. The fourth knob is analog volume. The audio PWM waveform expects the XL's existing output circuit. No external clock, MIDI, trigger or sample loading is used.
+Turn the first knob back up to resume the loops you were playing.
 
-Some PCB V2 boards swap the two function knobs. If the rhythm and Space controls appear exchanged, set `kSwapFunctionKnobs` in `src/main.cpp` to `true`, rebuild and flash. Confirm key order and audio level on your specific assembled unit before giving it to a child; this hardware has no measured hearing-safe limit.
+## Edit an eight-step pattern
 
-## Restore the previous firmware
+Use the step editor to place hits exactly where you want them. Each sound has its own eight-step pattern, repeating every two beats.
 
-A full, verified 16 MB image of the device before this upload is stored locally at `backups/pikocore-original-2026-09-26.bin` (SHA-256 `b2c9b83fc0e2cd278cf3bf5cb127d6dc38c3a7892d7b7519468f5403084c0834`). The `backups/` directory is excluded from Git, so keep a separate copy of this file. To restore it, put the board in BOOTSEL mode and use a USB-capable `picotool`:
+1. Keep the tempo knob above its minimum. Hold **buttons 6 and 7 together for one second**, then release them.
+2. Turn the **second knob** to choose a sound. From low to high, the choices follow buttons 1–7: C, D, E, G, A, kick, snare.
+3. Buttons **1–8 now represent steps**. Tap a button to turn that step on or off. Each press also previews the chosen sound. Lit steps belong to the pattern; a moving blink shows playback.
+4. Choose another sound with the second knob to edit its pattern. Adding a hit starts that sound's loop.
+5. Hold **6 and 7 together for one second** again to return to normal play. Your edited patterns keep playing.
 
-```sh
-picotool load -v -x backups/pikocore-original-2026-09-26.bin
-```
+In the editor, the first knob still controls tempo and the third still controls Space. Bounce keeps its previous setting, but its extra drum hits are omitted for patterns you edit by hand.
+
+To replace an edited pattern with an evenly spaced rhythm, leave the editor, hold that sound's button, and turn the second knob.
+
+## Install
+
+1. [Download `littlecore.uf2`](https://github.com/v3rm0n/laurencore/raw/refs/heads/main/firmware/littlecore.uf2).
+2. Hold **BOOTSEL** while connecting the Pikocore XL by USB.
+3. Copy the UF2 file to the **RPI-RP2** drive. The device restarts with Laurencore.
+
+For build instructions, tests, and wiring details, see the [developer guide](docs/development.md).

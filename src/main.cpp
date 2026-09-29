@@ -104,6 +104,20 @@ void trigger(uint8_t track) {
   }
 }
 
+void play_editor_chime(bool entering) {
+  // A high pair announces entry; a lower pair announces exit.
+  Voice& v = voices[7];
+  v.phase = 0;
+  v.phase2 = 0;
+  v.filtered = 0;
+  v.gain = 0;
+  v.melody_mode = false;
+  v.envelope = 65535;
+  v.decrement = decay_steps[7][2];
+  v.increment = scale_increments[entering ? 15 : 10];  // C6 or C5
+  v.increment2 = scale_increments[entering ? 18 : 13]; // G6 or G5
+}
+
 void trigger_melody_note() {
   melody_rng ^= melody_rng << 13;
   melody_rng ^= melody_rng >> 17;
@@ -356,12 +370,11 @@ void poll_buttons(uint32_t now_ms) {
       }
     if (!sequencer_mode) publish_controls();
     sequencer_mode = !sequencer_mode;
-    if (sequencer_mode) {
-      uint32_t flags = save_and_disable_interrupts();
-      melody_held = false;
-      fill_steps_left = 0;
-      restore_interrupts(flags);
-    }
+    uint32_t flags = save_and_disable_interrupts();
+    melody_held = false;
+    fill_steps_left = 0;
+    play_editor_chime(sequencer_mode);
+    restore_interrupts(flags);
   }
   if (!both) chord_active = false;
   if (!buttons[5].stable && !buttons[6].stable) chord_consumed = false;

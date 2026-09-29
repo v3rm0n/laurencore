@@ -1,0 +1,6 @@
+build/
+*.uf2
+.DS_Store
+build-arm/
+!firmware/littlecore.uf2
+backups/

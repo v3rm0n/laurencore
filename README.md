@@ -45,9 +45,11 @@ Turn a knob normally to change the whole performance. **Hold a sound button (1â€
 
 The fourth knob controls volume.
 
+Space adds echo and reverb to notes, the melody and chimes. Kick and snare always stay dry.
+
 Pitch changes keep the five notes in the C major pentatonic scale. For the drums, this control changes kick pitch or snare brightness. The rhythm control spreads 1â€“7 hits evenly across eight steps; this is a *Euclidean rhythm*.
 
-You can hold several sound buttons to edit them together. After a hold-and-turn edit, releasing the buttons keeps their loops on or off as they were.
+You can hold several sound buttons to edit them together. In normal play, turning the rhythm knob starts the held sounds' loops immediately, so you can hear the rhythms as you choose them. They keep playing when you release the buttons. Pitch and length edits keep each loop's existing on/off state.
 
 ## Play by hand
 

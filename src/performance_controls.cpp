@@ -73,6 +73,8 @@ uint8_t PerformanceControls::turn(const uint16_t adc[3], bool sequencer_mode) {
           pulses_[i] = music::density(adc[knob]);
           pattern_[i] = music::euclidean_pattern(pulses_[i], kRotations[i]);
           hand_edited_ &= ~bit;
+          // Hear the chosen rhythm immediately, even if this part was off.
+          if (!manual_mode_) enabled_ |= bit;
         } else {
           const uint8_t next = position9(adc[knob]);
           if (length_[i] != next) audition |= bit;

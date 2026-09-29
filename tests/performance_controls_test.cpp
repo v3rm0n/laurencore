@@ -39,7 +39,9 @@ int main() {
   const uint16_t new_rhythm[3] = {3000, 3500, 0};
   controls.press(1, high_note);
   controls.turn(new_rhythm);
+  assert(controls.enabled() == (1u << 1)); // hear the rhythm before releasing
   controls.release(1, new_rhythm);
+  assert(controls.enabled() == (1u << 1));
   assert(controls.pulses(1) == music::density(3500));
   assert(controls.pattern(1) == music::euclidean_pattern(controls.pulses(1), 2));
   assert(controls.pulses(0) == 3);
@@ -66,7 +68,7 @@ int main() {
   // The tempo knob's bottom stop is manual play; taps preserve saved loops.
   controls.press(2, free_turn);
   controls.release(2, free_turn);
-  assert(controls.enabled() == (1u << 2));
+  assert(controls.enabled() == ((1u << 1) | (1u << 2)));
   const uint16_t manual[3] = {0, 3700, 3800};
   controls.turn(manual);
   assert(controls.manual_mode());
@@ -74,12 +76,12 @@ int main() {
   controls.release(0, manual);
   controls.press(2, manual);
   controls.release(2, manual);
-  assert(controls.enabled() == (1u << 2));
+  assert(controls.enabled() == ((1u << 1) | (1u << 2)));
   controls.turn(free_turn);
   assert(!controls.manual_mode());
   controls.press(0, free_turn);
   controls.release(0, free_turn);
-  assert(controls.enabled() == ((1u << 2) | 1));
+  assert(controls.enabled() == ((1u << 1) | (1u << 2) | 1));
 
   // Hand-edited steps play as stored; regenerating one rhythm leaves others.
   const uint8_t other_pattern = controls.pattern(2);
@@ -112,4 +114,37 @@ int main() {
   const uint16_t sequencer_knob[3] = {3200, 4000, 3800};
   controls.turn(sequencer_knob, true);
   assert(controls.bounce() == bounce);
+
+  // Starting from silence, rhythm editing starts every held part immediately.
+  PerformanceControls silent;
+  silent.init(initial);
+  silent.press(0, initial);
+  silent.press(5, initial);
+  const uint16_t rhythm_noise[3] = {1000, 1030, 0};
+  silent.turn(rhythm_noise);
+  assert(silent.enabled() == 0);
+  const uint16_t chosen_rhythm[3] = {1000, 3000, 0};
+  silent.turn(chosen_rhythm);
+  assert(silent.enabled() == ((1u << 0) | (1u << 5)));
+  assert(silent.pulses(0) == music::density(3000));
+  assert(silent.pulses(5) == music::density(3000));
+  silent.release(0, chosen_rhythm);
+  silent.release(5, chosen_rhythm);
+  assert(silent.enabled() == ((1u << 0) | (1u << 5)));
+  silent.press(0, chosen_rhythm);
+  silent.release(0, chosen_rhythm);
+  assert(silent.enabled() == (1u << 5)); // the next normal tap stops it
+
+  // Free play allows rhythm edits without enabling any paused loops.
+  const uint16_t paused[3] = {0, 3000, 0};
+  silent.turn(paused);
+  silent.press(1, paused);
+  const uint16_t paused_edit[3] = {0, 1600, 0};
+  silent.turn(paused_edit);
+  assert(silent.pulses(1) == music::density(1600));
+  assert(silent.enabled() == (1u << 5));
+  silent.release(1, paused_edit);
+  silent.turn(initial);
+  assert(!silent.manual_mode());
+  assert(silent.enabled() == (1u << 5));
 }

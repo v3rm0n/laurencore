@@ -237,13 +237,16 @@ void audio_interrupt() {
                                             bounce_amount);
   }
   --samples_until_step;
-  int32_t mix = 0;
-  for (uint8_t i = 0; i < music::kTracks; ++i) mix += render_voice(i);
-  mix /= 8;
-  if (mix > 500) mix = 500;
-  if (mix < -500) mix = -500;
+  int32_t pitched_mix = 0;
+  int32_t percussion_mix = 0;
+  for (uint8_t i = 0; i < music::kTracks; ++i) {
+    const int32_t sample = render_voice(i);
+    if (i == 5 || i == 6) percussion_mix += sample;
+    else pitched_mix += sample;
+  }
   int16_t output = space_effect.process(
-      static_cast<int16_t>(mix), samples_per_step * 2, space_amount);
+      static_cast<int16_t>(pitched_mix / 8), samples_per_step * 2, space_amount,
+      static_cast<int16_t>(percussion_mix / 8));
   pwm_set_gpio_level(kAudioPin, 512 + output);
 }
 

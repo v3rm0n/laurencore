@@ -16,7 +16,7 @@ int16_t comb(int16_t* buffer, uint16_t length, uint16_t& head, int16_t input) {
 }
 
 int16_t SpaceEffect::process(int16_t dry, uint16_t delay_samples,
-                             uint8_t amount) {
+                             uint8_t amount, int16_t bypass) {
   if (delay_samples == 0) delay_samples = 1;
   if (delay_samples >= kEchoCapacity) delay_samples = kEchoCapacity - 1;
   // Glide the tap when tempo changes so it cannot jump to an unrelated sample.
@@ -45,6 +45,8 @@ int16_t SpaceEffect::process(int16_t dry, uint16_t delay_samples,
   int32_t dry_gain = 256 - (echo_wet + room_wet) / 2;
   int32_t output =
       (dry * dry_gain + echo * echo_wet + reverb * room_wet) / 256;
+  // Percussion bypasses both the effect buffers and the wet/dry gain changes.
+  output += bypass;
   if (output > 500) output = 500;
   if (output < -500) output = -500;
   return static_cast<int16_t>(output);

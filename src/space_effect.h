@@ -1,11 +1,12 @@
 #pragma once
 #include <cstdint>
 
-// A single mono bus: tempo-synced echo, then a small diffused room tail.
+// Mono echo and room effect, with a dry bypass mixed in at the output.
 class SpaceEffect {
  public:
   static constexpr uint16_t kEchoCapacity = 12000;
-  int16_t process(int16_t dry, uint16_t delay_samples, uint8_t amount);
+  int16_t process(int16_t dry, uint16_t delay_samples, uint8_t amount,
+                  int16_t bypass = 0);
 
  private:
   static constexpr uint16_t kCombA = 863;
